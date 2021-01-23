@@ -11,15 +11,30 @@ class FetchData {
 }
 
 class Twitter {
-  constructor({ user, listElem, modalElems, tweetElems }) {
+  constructor({ 
+    user, 
+    listElem, 
+    modalElems, 
+    tweetElems,
+    classDeleteTweet, 
+    classLikeTweet, 
+    sortElem
+  }) {
     const fetchData = new FetchData();
     this.user = user;
     this.tweets = new Posts();
     this.elements = {
       listElem: document.querySelector(listElem),
+      sortElem: document.querySelector(sortElem),
       modal: modalElems,
       tweetElems
     }
+    this.class = {
+      classDeleteTweet,
+      classLikeTweet
+    };
+    this.sortDate = true;
+
     fetchData.getPost()
       .then(data => {
         data.forEach(this.tweets.addPost)
@@ -28,10 +43,16 @@ class Twitter {
     
      this.elements.modal.forEach(this.handlerModal, this);
      this.elements.tweetElems.forEach(this.addTweet, this);
+
+     this.elements.listElem.addEventListener('click', this.handlerTweet);
+     this.elements.sortElem.addEventListener('click', this.changeSort);
+
   }
-  renderPosts(tweets) {
+  renderPosts(posts) {
+    const sortPost = posts.sort(this.sortFields());
     this.elements.listElem.textContent = '';
-  tweets.forEach(({ id, userName, nickname, postDate, text, img, likes }) => {
+  posts.forEach(({ id, userName, nickname, postDate, text, img, likes, liked
+  }) => {
 
     this.elements.listElem.insertAdjacentHTML('beforeend', `
     <li>
@@ -44,7 +65,7 @@ class Twitter {
                 <span class="tweet-author__add tweet-author__nickname">@${nickname}</span>
                 <time class="tweet-author__add tweet__date">${postDate}</time>
               </h3>
-              <button class="tweet__delete-button chest-icon data-id="${id}"></button>
+              <button class="tweet__delete-button chest-icon data-id="${id}""></button>
             </header>
             <div class="tweet-post">
               <p class="tweet-post__text">${text}</p>
@@ -58,7 +79,8 @@ class Twitter {
           </div>
         </div>
         <footer>
-          <button class="tweet__like">
+          <button class="tweet__like ${liked ? this.class.classLikeTweet.active : ''}"
+          data-id="${id}">
             ${likes}
           </button>
         </footer>
@@ -133,6 +155,34 @@ class Twitter {
       imgUrl = prompt('Введите адрес картинки');
     })
   }
+  handlerTweet = event => {
+    const target = event.target;
+    if(target.classList.contains(this.class.classDeleteTweet) ) {
+       this.tweets.deletePost(target.dataset.id);
+       this.showAllPost();
+    }
+    if(target.classList.contains(this.class.classLikeTweet.like) ){
+      this.tweets.likePost(target.dataset.id);
+      this.showAllPost();
+    }
+  }
+  changeSort = () => {
+    this.sortDate = ! this.sortDate;
+    this.showAllPost();
+  }
+  sortFields() {
+    if (this.sortDate) {
+      return (a, b) => {
+        const dateA = new Date(a.postDate);
+        const dateB = new Date(b.postDate);
+        return dateB - dateA;
+      }
+    } else {
+      return (a, b) => b.likes - a.likes;
+
+      
+    }
+  }
 }
 
 class Posts {
@@ -143,10 +193,15 @@ class Posts {
     this.posts.push(new Post(tweets));
   }
   deletePost(id) {
+   this.posts = this.posts.filter(item => item.id !== id);
+   }
 
-  }
   likePost(id) {
-
+    this.posts.forEach(item => {
+      if(item.id === id) {
+         item.changeLike();
+      }
+    })
   }
 }
 class Post {
@@ -172,7 +227,7 @@ class Post {
   generateID() {
     return Math.random().toString(32).substring(2, 9) + (+new Date).toString(32);
   } 
- getDate(){
+ getDate =() => {
     const options = {
       year: 'numeric',
       month: 'numeric',
@@ -180,8 +235,14 @@ class Post {
       hour: '2-digit',
       minute: '2-digit',
     };
-    return this.postData.toLocaleString('ru-Ru', options);
+    return this.postDate.toLocaleString('ru-Ru', options);
  }
+  correctDate(date) {
+    if(isNaN(Date.parse(date))){
+      date = date.replaceAll('.','/')
+    }
+    return new Date(date);
+  }
 }
 const twitter = new Twitter({
   listElem: '.tweet-list',
@@ -202,6 +263,17 @@ const twitter = new Twitter({
       text: '.modal .tweet-form__text',
       img: '.modal .tweet-img__btn',
       submit: '.modal .tweet-form__btn',
+    },
+    {
+      text: '.tweet-form__text',
+      img: '.tweet-img__btn',
+      submit: '.tweet-form__btn',
     }
-  ]
+  ],
+  classDeleteTweet: 'tweet__delete-button',
+  classLikeTweet: {
+    like: 'tweet__like',
+    active: 'tweet__like_active'
+  },
+  sortElem: '.header__link_sort'
 })
