@@ -7,21 +7,22 @@ class FetchData {
     return res.json();
   }
   getPost = () => this.getResourse('db/dataBase.json'); 
-  
+   
 }
+// new FetchData().getPost().then(data);
 
 class Twitter {
   constructor({ 
-    user, 
-    listElem, 
-    modalElems, 
-    tweetElems,
-    classDeleteTweet, 
-    classLikeTweet, 
-    sortElem
+     user, 
+     listElem, 
+     modalElems, 
+     tweetElems,
+     classDeleteTweet, 
+     classLikeTweet, 
+     sortElem
   }) {
     const fetchData = new FetchData();
-    this.user = user;
+     this.user = user;
     this.tweets = new Posts();
     this.elements = {
       listElem: document.querySelector(listElem),
@@ -29,11 +30,11 @@ class Twitter {
       modal: modalElems,
       tweetElems
     }
-    this.class = {
-      classDeleteTweet,
-      classLikeTweet
-    };
-    this.sortDate = true;
+     this.class = {
+       classDeleteTweet,
+       classLikeTweet
+     }
+     this.sortDate = true;
 
     fetchData.getPost()
       .then(data => {
@@ -41,19 +42,18 @@ class Twitter {
         this.showAllPost();
         });
     
-     this.elements.modal.forEach(this.handlerModal, this);
-     this.elements.tweetElems.forEach(this.addTweet, this);
+      this.elements.modal.forEach(this.handlerModal, this);
+      this.elements.tweetElems.forEach(this.addTweet, this);
 
-     this.elements.listElem.addEventListener('click', this.handlerTweet);
-     this.elements.sortElem.addEventListener('click', this.changeSort);
+      this.elements.listElem.addEventListener('click', this.handlerTweet);
+      this.elements.sortElem.addEventListener('click', this.changeSort);
 
   }
   renderPosts(posts) {
-    const sortPost = posts.sort(this.sortFields());
+     const sortPosts = posts.sort(this.sortFields());
     this.elements.listElem.textContent = '';
-  posts.forEach(({ id, userName, nickname, postDate, text, img, likes, liked
-  }) => {
-
+    posts.forEach(({ id, userName, nickname, text, img, likes, liked, getDate }) => {
+  
     this.elements.listElem.insertAdjacentHTML('beforeend', `
     <li>
       <article class="tweet">
@@ -63,9 +63,9 @@ class Twitter {
             <header class="tweet__header">
               <h3 class="tweet-author">${userName}
                 <span class="tweet-author__add tweet-author__nickname">@${nickname}</span>
-                <time class="tweet-author__add tweet__date">${postDate}</time>
+                <time class="tweet-author__add tweet__date">${getDate()}</time>
               </h3>
-              <button class="tweet__delete-button chest-icon data-id="${id}""></button>
+              <button class="tweet__delete-button chest-icon" data-id="${id}"></button>
             </header>
             <div class="tweet-post">
               <p class="tweet-post__text">${text}</p>
@@ -99,11 +99,11 @@ class Twitter {
   showAllPost() {
     this.renderPosts(this.tweets.posts);
   }
-  handlerModal({ button, modal,overlay, close }) {
-    const buttonElem = document.querySelector(button);
-    const modalElem = document.querySelector(modal);
-    const overlayElem = document.querySelector(overlay);
-    const closeElem = document.querySelector(close);
+   handlerModal({ button, modal, overlay, close }) {
+     const buttonElem = document.querySelector(button);
+     const modalElem = document.querySelector(modal);
+     const overlayElem = document.querySelector(overlay);
+     const closeElem = document.querySelector(close);
 
     const openModal = () => {
       modalElem.style.display = 'block';
@@ -126,7 +126,7 @@ class Twitter {
       modalElem.style.display = 'none';
     };
     
-  }
+   }
 
   addTweet({ text, img, submit }) {
     const textElem = document.querySelector(text);
@@ -155,16 +155,16 @@ class Twitter {
       imgUrl = prompt('Введите адрес картинки');
     })
   }
-  handlerTweet = event => {
+  handlerTweet =(event) => {
     const target = event.target;
-    if(target.classList.contains(this.class.classDeleteTweet) ) {
+     if(target.classList.contains(this.class.classDeleteTweet) ) {
        this.tweets.deletePost(target.dataset.id);
+        this.showAllPost();
+     }
+     if(target.classList.contains(this.class.classLikeTweet.like) ){
+       this.tweets.likePost(target.dataset.id);
        this.showAllPost();
-    }
-    if(target.classList.contains(this.class.classLikeTweet.like) ){
-      this.tweets.likePost(target.dataset.id);
-      this.showAllPost();
-    }
+     }
   }
   changeSort = () => {
     this.sortDate = ! this.sortDate;
@@ -185,32 +185,32 @@ class Twitter {
   }
 }
 
-class Posts {
-  constructor({ posts = [] } = {}) {
-    this.posts = posts;
-  }
-  addPost = tweets => {
-    this.posts.push(new Post(tweets));
-  }
-  deletePost(id) {
-   this.posts = this.posts.filter(item => item.id !== id);
-   }
+  class Posts {
+    constructor({ posts = [] } = {}) {
+      this.posts = posts;
+    }
+    addPost = (tweets) => {
+      this.posts.push(new Post(tweets));
+    }
+    deletePost(id) {
+    this.posts = this.posts.filter((item) => item.id !== id);
+    }
+        
+    likePost(id) {
+      this.posts.forEach(item => {
+        if(item.id === id) {
+          item.changeLike();
+        }
+      })
+    }
 
-  likePost(id) {
-    this.posts.forEach(item => {
-      if(item.id === id) {
-         item.changeLike();
-      }
-    })
   }
-}
 class Post {
   constructor({ id, userName, nickname, postDate, text, img, likes = 0 }) {
-    
     this.id = id || this.generateID();
     this.userName = userName;
     this.nickname = nickname;
-    this.postDate = postDate ? new Date(postDate) : new Date();
+    this.postDate = postDate ? this.correctDate(postDate) : new Date();
     this.text = text;
     this.img = img;
     this.likes = likes;
@@ -227,7 +227,7 @@ class Post {
   generateID() {
     return Math.random().toString(32).substring(2, 9) + (+new Date).toString(32);
   } 
- getDate =() => {
+ getDate = () => {
     const options = {
       year: 'numeric',
       month: 'numeric',
@@ -239,41 +239,41 @@ class Post {
  }
   correctDate(date) {
     if(isNaN(Date.parse(date))){
-      date = date.replaceAll('.','/')
+      date = date.replace(/\./g,'/');
     }
     return new Date(date);
   }
 }
-const twitter = new Twitter({
-  listElem: '.tweet-list',
-  user: {
-    name: 'ABCD',
-    nick: 'abcd',
-  },
-  modalElems: [
-    {
-      button: '.header__link_tweet',
-      modal: '.modal',
-      overlay: '.overlay',
-      close: '.modal-close__btn',
-    }
-  ],
-  tweetElems: [
-    {
-      text: '.modal .tweet-form__text',
-      img: '.modal .tweet-img__btn',
-      submit: '.modal .tweet-form__btn',
+  const twitter = new Twitter({
+    listElem: '.tweet-list',
+    user: {
+      name: 'ABCD',
+      nick: 'abcd',
     },
-    {
-      text: '.tweet-form__text',
-      img: '.tweet-img__btn',
-      submit: '.tweet-form__btn',
-    }
-  ],
-  classDeleteTweet: 'tweet__delete-button',
-  classLikeTweet: {
-    like: 'tweet__like',
-    active: 'tweet__like_active'
-  },
-  sortElem: '.header__link_sort'
-})
+    modalElems: [
+      {
+        button: '.header__link_tweet',
+        modal: '.modal',
+        overlay: '.overlay',
+        close: '.modal-close__btn',
+      }
+    ],
+    tweetElems: [
+      {
+        text: '.modal .tweet-form__text',
+        img: '.modal .tweet-img__btn',
+        submit: '.modal .tweet-form__btn',
+      },
+      {
+        text: '.tweet-form__text',
+        img: '.tweet-img__btn',
+        submit: '.tweet-form__btn',
+      }
+    ],
+    classDeleteTweet: 'tweet__delete-button',
+    classLikeTweet: {
+      like: 'tweet__like',
+      active: 'tweet__like_active'
+    },
+    sortElem: '.header__link_sort'
+  });
